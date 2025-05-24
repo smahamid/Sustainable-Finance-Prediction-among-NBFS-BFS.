@@ -1,0 +1,61 @@
+
+> # ESG Scoring & Projection for Top Bangladeshi Banks & NBFIs (2023–2028)
+> 
+> # Load required libraries
+> if (!require("ggplot2")) install.packages("ggplot2")
+Loading required package: ggplot2
+> library(ggplot2)
+> 
+> # Step 1: ESG Data for 2023 (Base Year)
+> company_data <- data.frame(
++   Company = c("BRAC Bank Ltd", "City Bank Ltd", "IDLC Finance Ltd", 
++               "IPDC Finance PLC", "LankaBangla Finance PLC", "Premier Bank Ltd", "Green Delta Finance"),
++ 
++   CarbonReductionInitiatives = c(85, 75, 90, 95, 60, 55, 50),     # Higher is better (0–100)
++   GenderDiversityRatio = c(0.45, 0.40, 0.50, 0.42, 0.25, 0.30, 0.28),
++   CSRSpending = c(2.5, 2.2, 3.0, 2.8, 1.8, 1.6, 1.5),               # CSR spending % of net income
++   BoardIndependence = c(0.7, 0.65, 0.8, 0.78, 0.5, 0.55, 0.52)
++ )
+> 
+> # Step 2: Normalize function
+> normalize <- function(x) {
++   return((x - min(x)) / (max(x) - min(x)))
++ }
+> 
+> # Step 3: ESG scores by year
+> project_years <- c(2023, 2026, 2027, 2028)
+> trend_growth <- c(1.00, 1.08, 1.14, 1.20)  # Simulated trend multipliers for ESG growth
+> 
+> # Step 4: Function to project ESG scores
+> get_esg_scores <- function(base_data, multiplier) {
++   data <- base_data
++   data$CarbonReductionInitiatives <- data$CarbonReductionInitiatives * multiplier
++   data$CSRSpending <- data$CSRSpending * multiplier
++ 
++   data$EnvScore <- normalize(data$CarbonReductionInitiatives)
++   data$SocScore <- normalize(data$GenderDiversityRatio + data$CSRSpending)
++   data$GovScore <- normalize(data$BoardIndependence)
++ 
++   data$ESGScore <- round((0.4 * data$EnvScore + 0.3 * data$SocScore + 0.3 * data$GovScore) * 100, 1)
++   return(data[, c("Company", "ESGScore")])
++ }
+> 
+> # Step 5: Compile ESG scores for all years
+> projection_list <- lapply(trend_growth, function(m) get_esg_scores(company_data, m))
+> 
+> # Combine all projections
+> for (i in 1:length(project_years)) {
++   projection_list[[i]]$Year <- project_years[i]
++ }
+> esg_projections <- do.call(rbind, projection_list)
+> 
+> # Step 6: Visualization of ESG Score Trends
+> ggplot(esg_projections, aes(x = Year, y = ESGScore, color = Company, group = Company)) +
++   geom_line(size = 1.2) +
++   geom_point(size = 2) +
++   labs(title = "Projected ESG Score Trend (2023–2028)",
++        x = "Year",
++        y = "ESG Score (out of 100)") +
++   theme_minimal() +
++   theme(legend.title = element_blank())
+
